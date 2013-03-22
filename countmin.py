@@ -1,4 +1,5 @@
 import zlib
+# import pytest
 DEFAULT_SIZE = 10000
 DEFAULT_K = 2
 LARGE_PRIME = 7919
@@ -10,7 +11,7 @@ class CountMinSketch(object):
         self.k = k
         self.size = size
         self.tables = [[0]*self.size for i in xrange(self.k)]
-        self.hash_functions = self._init_hash_functions()
+        self.hash_functions = self._init_hash_functions(k, size)
 
     def _init_hash_functions(self, k, size, large_prime=LARGE_PRIME):
         """create and return array of hash functions, 
@@ -20,6 +21,7 @@ class CountMinSketch(object):
         hash_functions = []
         for i in xrange(1, k+1):
             hash_functions.append(self._create_func(size, i, large_prime))
+        return hash_functions
 
     def _create_func(self, size, mult, large_prime):
         def inner(val_to_hash):
@@ -40,16 +42,24 @@ class CountMinSketch(object):
             counts.append(self.tables[i][table_i_hashed_key])
         return min(counts)
 
-class TestCountMinSketch:
-    def test_default_initialization():
-        cms = CountMinSketch()
-        assert cms.k == DEFAULT_K
-        assert cms.size == DEFAULT_SIZE
+# class TestCountMinSketch:
+def test_default_initialization():
+    cms = CountMinSketch()
+    assert cms.k == DEFAULT_K
+    assert cms.size == DEFAULT_SIZE
 
-    def test_counting():
-        cms = CountMinSketch()
-        times = 5
-        s = "rabble"
-        for i in xrange(times):
-            cms.update(s)
-        assert cms.query(s) == 5
+def test_counting():
+    cms = CountMinSketch()
+    times = 100
+    s = "rabble"
+    s2 = "babble"
+    s3 = "smabble"
+    for i in xrange(times):
+        cms.update(s)
+        if i % 2 == 0:
+            cms.update(s2)
+        if i % 3 == 0:
+            cms.update(s3)
+    assert cms.query(s) == times
+    assert cms.query(s) > cms.query(s2)
+    assert cms.query(s2) > cms.query(s3)
